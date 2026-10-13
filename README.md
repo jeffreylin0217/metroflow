@@ -3,7 +3,7 @@
 
 An incremental Python/SQL batch pipeline for real NYC Yellow Taxi records, official taxi zones and NOAA daily weather. It turns recurring monthly files into tested dimensional models and Power BI-ready reporting datasets.
 
-[![Fixture pipeline CI](https://github.com/jeffreylin0217/metroflow-de/actions/workflows/ci.yml/badge.svg)](https://github.com/jeffreylin0217/metroflow-de/actions/workflows/ci.yml)
+[![Fixture pipeline CI](https://github.com/jeffreylin0217/metroflow/actions/workflows/ci.yml/badge.svg)](https://github.com/jeffreylin0217/metroflow/actions/workflows/ci.yml)
 
 ## At a glance
 
