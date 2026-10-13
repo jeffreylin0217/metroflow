@@ -5,6 +5,14 @@ An incremental Python/SQL batch pipeline for real NYC Yellow Taxi records, offic
 
 [![Fixture pipeline CI](https://github.com/jeffreylin0217/metroflow-de/actions/workflows/ci.yml/badge.svg)](https://github.com/jeffreylin0217/metroflow-de/actions/workflows/ci.yml)
 
+## At a glance
+
+- 24.1M real NYC taxi records (January to June 2025) in six monthly Parquet partitions
+- Only new or changed months are reprocessed, tracked with SHA-256 checksums in a SQLite source manifest
+- 10 dbt models in DuckDB: 3 staging models, a trip fact, date and zone dimensions, and 4 daily marts
+- 38 dbt tests and 21 pytest tests; CI runs the pipeline end to end on small synthetic data
+- 6 reporting datasets for Power BI, each exported as CSV and Parquet
+
 ![MetroFlow snapshot showing six monthly trip totals, all pickup-location categories, and measured batch runtimes.](docs/assets/metroflow_project_snapshot.png)
 
 The snapshot is generated from one published Gold reporting generation and recorded benchmark runs. Retained trips include suspicious records. The first timed load reused January and the zone lookup; the other operations used cached raw files. [Exact plotted values and source checksums](docs/assets/snapshot_values.json) · [Visual methodology and reconciliation](docs/VISUALS.md).
