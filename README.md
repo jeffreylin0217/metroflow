@@ -4,7 +4,10 @@
 
 Incremental batch pipeline for real NYC taxi data. It loads monthly TLC trip files, official taxi zones, and NOAA daily weather into a tested star schema in DuckDB, and only reprocesses months that are new or changed.
 
-![MetroFlow snapshot: monthly trip totals, pickups by location, and measured run times](docs/assets/metroflow_project_snapshot.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/metroflow-architecture-dark.png">
+  <img alt="MetroFlow architecture: public sources, Python ingestion, monthly Bronze Parquet, dbt star schema in DuckDB, and a publish step that only runs after the build and tests pass" src="docs/assets/metroflow-architecture-light.png">
+</picture>
 
 ## At a glance
 
@@ -17,17 +20,6 @@ Incremental batch pipeline for real NYC taxi data. It loads monthly TLC trip fil
 **Stack:** Python 3.12, PyArrow, Parquet, DuckDB, dbt, SQL, SQLite, pytest, GitHub Actions
 
 ## Architecture
-
-```mermaid
-flowchart LR
-  A[TLC + zones + NOAA] --> B[Python ingestion]
-  B --> C[Immutable raw + manifest]
-  C --> D[Monthly Bronze Parquet]
-  D --> E[DuckDB + dbt staging]
-  E --> F[Trip fact + date/zone dimensions]
-  F --> G[Daily marts + quality tests]
-  G --> H[CSV / Parquet for BI]
-```
 
 Python handles downloads, checksums, schema checks, and exports. dbt handles everything inside the warehouse: staging, quality flags, the fact, dimensions, and marts.
 
@@ -53,6 +45,8 @@ Python handles downloads, checksums, schema checks, and exports. dbt handles eve
 | mart_quality | source month × quality status | 18 |
 
 `fct_trips` joins to `dim_date` on pickup date and to `dim_zone` for both pickup and dropoff. dbt tests check those relationships.
+
+![MetroFlow snapshot: monthly trip totals, pickups by location, and measured run times](docs/assets/metroflow_project_snapshot.png)
 
 ## Run it
 
