@@ -91,6 +91,6 @@ dbt test --project-dir dbt --profiles-dir dbt
 
 ## More detail
 
-[Architecture and failure recovery](docs/ARCHITECTURE.md) · [Quality rules](docs/QUALITY.md) · [Sources](docs/SOURCES.md) · [Measured results](docs/AUDIT.md) · [Snapshot method](docs/VISUALS.md) · [Power BI guide](docs/POWER_BI.md)
+[Architecture and failure recovery](docs/ARCHITECTURE.md) · [Quality rules](docs/QUALITY.md) · [Sources](docs/SOURCES.md) · [Measured results](docs/AUDIT.md) · [Power BI guide](docs/POWER_BI.md)
 
 Scope: local batch processing. Scheduling is outside this repo, and the CLI can be called by any scheduler.
