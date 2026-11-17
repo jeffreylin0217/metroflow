@@ -13,7 +13,7 @@ Incremental batch pipeline for real NYC taxi data. It loads monthly TLC trip fil
 
 - 24.1M real yellow taxi trips (January to June 2025) in six monthly Parquet partitions
 - 10 dbt models in DuckDB: 3 staging models, a trip fact, date and zone dimensions, and 4 marts
-- 38 dbt tests and 21 pytest tests; GitHub Actions runs the whole pipeline on small synthetic data on every push
+- 38 dbt tests and 21 pipeline pytest tests; GitHub Actions runs the whole pipeline on small synthetic data on every push
 - Measured locally: rerun with no changes 0.3 s, one month backfill 18.7 s, full rebuild of all six months from local files 24.6 s
 - 6 Power BI ready reporting datasets, each exported as CSV and Parquet
 

@@ -1,0 +1,109 @@
+guidance: >-
+  Use DuckDB SQL and prefer the small marts over fct_trips (about 24 million rows).
+  Retained trips include ACCEPTED and SUSPICIOUS records. Money is recorded USD,
+  not audited revenue. Distance is miles; duration is minutes. Do not sum across
+  overlapping marts or average daily averages without weighting by trip_count.
+  Missing weather is NULL, not dry weather. Weather associations are not causal.
+tables:
+  main.dim_zone:
+    description: Official TLC locations, including Unknown/N/A and EWR.
+    grain: One zone_key.
+    columns:
+      zone_key: Unique TLC location ID.
+      borough: Pickup or dropoff borough label.
+      zone: Zone name.
+      service_zone: TLC service area.
+    joins: [mart_zone_daily.zone_key = dim_zone.zone_key, fct_trips.pickup_zone_key = dim_zone.zone_key, fct_trips.dropoff_zone_key = dim_zone.zone_key]
+  main.dim_date:
+    description: Calendar spanning loaded weather months; gaps can contain unloaded dates.
+    grain: One date_key.
+    columns:
+      date_key: Calendar DATE.
+      year: Calendar year.
+      month: Month number 1 to 12.
+      weekday_number: Sunday is 0; Saturday is 6.
+      weekday_name: Full English weekday name.
+      is_weekend: True for Saturday or Sunday.
+    joins: [mart_zone_daily.date = dim_date.date_key, mart_borough_daily.date = dim_date.date_key, mart_weather_demand.date = dim_date.date_key, fct_trips.pickup_date = dim_date.date_key]
+  main.mart_zone_daily:
+    description: Retained demand by pickup zone. Has zone_key only; join dim_zone for zone names and boroughs.
+    grain: One (date, zone_key) with retained trips.
+    columns:
+      date: Pickup DATE.
+      zone_key: Pickup location ID; no zone or borough column here.
+      trip_count: Retained trips.
+      passenger_count: Sum of observed usable passenger counts; not imputed.
+      trips_with_passenger_count: Number of trips contributing a passenger count.
+      average_trip_distance: Mean trip distance in miles.
+      average_trip_duration: Mean duration in minutes.
+      fare_amount: Sum of recorded base fares in USD.
+      total_amount: Sum of recorded total amounts in USD, including negative corrections.
+      suspicious_trip_count: Count of retained SUSPICIOUS trips.
+    joins: [mart_zone_daily.zone_key = dim_zone.zone_key, mart_zone_daily.date = dim_date.date_key]
+  main.mart_borough_daily:
+    description: Retained demand grouped after a many-to-one zone lookup.
+    grain: One (date, borough) with retained trips.
+    columns:
+      date: Pickup DATE.
+      borough: Pickup borough, including non-NYC lookup categories.
+      trip_count: Retained trips.
+      fare_amount: Sum of base fares in USD.
+      total_amount: Sum of recorded total amounts in USD.
+      active_pickup_zones: Number of distinct pickup zones with trips that day; not additive across dates.
+    joins: [mart_borough_daily.date = dim_date.date_key]
+  main.mart_weather_demand:
+    description: Daily demand and Central Park weather; exactly one row per loaded observation date, including zero-demand days.
+    grain: One date. Rainy means precipitation_mm > 0; dry means precipitation_mm = 0.
+    columns:
+      date: Observation and pickup DATE.
+      trip_count: Retained trips that day.
+      total_amount: Recorded total amounts in USD.
+      precipitation_mm: Daily precipitation in mm; NULL means missing or quality-rejected.
+      snowfall_mm: Daily snowfall in mm.
+      min_temperature_c: Minimum daily temperature in Celsius.
+      max_temperature_c: Maximum daily temperature in Celsius.
+      quality_flagged_values: Number of rejected weather measurements that day.
+      change_from_previous_day: Trip count minus the previous available observation's count.
+      trailing_7_day_trips: Mean demand over up to seven available observation rows, not necessarily consecutive days.
+    joins: [mart_weather_demand.date = dim_date.date_key, mart_borough_daily.date = mart_weather_demand.date]
+  main.mart_quality:
+    description: Counts all three statuses (ACCEPTED, SUSPICIOUS, INVALID) by source_period; reason counts overlap and must not be added together.
+    grain: One (source_period, quality_status) present in the source.
+    columns:
+      source_period: Source month as YYYY-MM text.
+      quality_status: ACCEPTED, SUSPICIOUS, or INVALID.
+      trip_count: Source records in this status, including excluded INVALID records.
+      missing_timestamp: Missing pickup or dropoff timestamp count.
+      reversed_timestamp: Dropoff before pickup count.
+      outside_source_month: Pickup outside the source month count.
+      invalid_distance: Missing, nonfinite, or negative distance count.
+      invalid_money: Missing or nonfinite required money count.
+      unknown_zone: Location ID absent from the lookup count.
+      long_duration: Duration over 180 minutes count.
+      zero_distance: Zero distance count.
+      negative_money: Negative recorded money count.
+      unusual_passengers: Missing, nonpositive, or noninteger passenger count.
+      unusual_payment: Unfamiliar payment code count.
+    joins: []
+  main.fct_trips:
+    description: Retained non-INVALID source records, including suspicious records; prefer marts for aggregate questions.
+    grain: One source record identified by trip_id, not a verified unique real-world ride.
+    columns:
+      trip_id: Source SHA-256 plus physical row number; duplicate-looking rides remain.
+      source_period: Source month as YYYY-MM text.
+      source_sha256: Source file checksum.
+      source_row: Zero-based physical source row.
+      pickup_datetime: Local wall-clock TIMESTAMP.
+      dropoff_datetime: Local wall-clock TIMESTAMP.
+      pickup_date: Pickup DATE.
+      pickup_zone_key: Pickup TLC location ID.
+      dropoff_zone_key: Dropoff TLC location ID.
+      passenger_count: Observed usable count; may be NULL.
+      trip_distance: Distance in miles.
+      trip_duration_minutes: Elapsed local wall-clock minutes.
+      fare_amount: Recorded base fare USD, DECIMAL.
+      tip_amount: Recorded tip USD, DECIMAL.
+      total_amount: Recorded total USD, DECIMAL.
+      payment_type: TLC payment code.
+      quality_status: Only ACCEPTED or SUSPICIOUS; INVALID rows are excluded. Use mart_quality to count all three statuses by source_period.
+    joins: [fct_trips.pickup_zone_key = dim_zone.zone_key, fct_trips.dropoff_zone_key = dim_zone.zone_key, fct_trips.pickup_date = dim_date.date_key]
