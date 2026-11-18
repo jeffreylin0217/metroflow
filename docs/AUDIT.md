@@ -74,7 +74,7 @@ The unchanged real rerun, forced March backfill and full refresh passed equivale
 
 ## Tests, warnings and CI
 
-**21 pytest tests pass**, including actual offline dbt lifecycle runs. Coverage includes schema drift, checksums, source-version changes, failed/invalid downloads, duplicate source detection, source identity, dimension uniqueness, weather dates/flags, writer locking, invalid timestamps, incrementals, idempotency, forced/empty backfills, full-refresh equivalence, export schemas, run metadata and publication failure recovery.
+**21 pipeline pytest tests pass**, including actual offline dbt lifecycle runs. Coverage includes schema drift, checksums, source-version changes, failed/invalid downloads, duplicate source detection, source identity, dimension uniqueness, weather dates/flags, writer locking, invalid timestamps, incrementals, idempotency, forced/empty backfills, full-refresh equivalence, export schemas, run metadata and publication failure recovery.
 
 Real **dbt build succeeds** with 10 models and 38 tests. Separate **dbt test succeeds: 37 PASS, 1 WARN, 0 FAIL, 0 ERROR**. The intentional warning finds one duplicated observed signature: two June 23 records, 07:27:34–07:27:43, unknown zone 264 to 264, zero miles, recorded total $4.50. They are suspicious and retained; selected field equality is not proof of one real-world ride.
 

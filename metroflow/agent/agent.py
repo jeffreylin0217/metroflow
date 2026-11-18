@@ -7,6 +7,7 @@ from sqlglot.errors import SqlglotError
 
 from metroflow.agent.context import schema_prompt
 from metroflow.agent.query import WAREHOUSE, run_sql
+from metroflow.agent.query_log import append_query_log
 
 TOOL = {
     'type': 'function',
@@ -86,12 +87,12 @@ def handle_tool_calls(message, messages, database):
     return sql, result
 
 
-def ask(question, database=WAREHOUSE, client=None):
+def answer_question(question, database, client, record):
     if not client:
         base_url = os.getenv('OPENAI_BASE_URL', 'http://localhost:11434/v1')
         api_key = os.getenv('OPENAI_API_KEY', 'ollama')
         client = OpenAI(base_url=base_url, api_key=api_key, timeout=90, max_retries=0)
-    model = os.getenv('OPENAI_MODEL', 'qwen3.5:4b')
+    model = record['model']
     prompt = SYSTEM + schema_prompt()
     messages = [
         {'role': 'system', 'content': prompt},
@@ -102,6 +103,7 @@ def ask(question, database=WAREHOUSE, client=None):
     error = 'No successful run_sql result.'
     for attempt in range(1, 4):
         sql = None
+        record.update(sql=None, attempts=attempt, row_count=None, error=None)
         entry = {'sql': None, 'error': None}
         history.append(entry)
         try:
@@ -110,6 +112,10 @@ def ask(question, database=WAREHOUSE, client=None):
             messages.append(reply)
             sql, result = handle_tool_calls(message, messages, database)
             error = result.get('error')
+            row_count = None
+            if 'rows' in result:
+                row_count = len(result['rows'])
+            record.update(sql=sql, row_count=row_count, error=error)
             entry.update(sql=sql, error=error)
             if error:
                 feedback = f'The query failed: {error}\n'
@@ -132,6 +138,7 @@ def ask(question, database=WAREHOUSE, client=None):
             }
         except (APIError, ValueError, TypeError) as exc:
             error = str(exc)
+            record.update(sql=sql, error=error)
             entry.update(sql=sql, error=error)
             messages.append({'role': 'user', 'content': error + '\nCall run_sql and try again.'})
     return {
@@ -141,3 +148,21 @@ def ask(question, database=WAREHOUSE, client=None):
         'error': error,
         'history': history,
     }
+
+
+def ask(question, database=WAREHOUSE, client=None):
+    record = {
+        'question': question,
+        'model': os.getenv('OPENAI_MODEL', 'qwen3.5:4b'),
+        'sql': None,
+        'attempts': 0,
+        'row_count': None,
+        'error': None,
+    }
+    try:
+        return answer_question(question, database, client, record)
+    except Exception as exc:
+        record['error'] = str(exc)
+        raise
+    finally:
+        append_query_log(**record)

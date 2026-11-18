@@ -55,6 +55,20 @@ Before trying any prompt changes, I wrote 10 more questions and saved a hash of 
 
 I tried adding example queries to the prompt. Held out accuracy went up from 7/10 to 9/10, but the original set dropped from 10/15 to 8/15. The total didn't improve, so I left them out.
 
+## MCP
+
+Once the checks worked, I wanted other AI tools to reuse them instead of writing their own unchecked SQL. The MCP server exposes two tools, run_sql and describe_tables, using the same checks and table context. It doesn't load a model. Start it from the repo root:
+
+```bash
+.venv/bin/python -m metroflow.agent.mcp_server
+```
+
+It only runs locally over stdio.
+
+## Query log
+
+Since the model is sometimes wrong, every question and MCP query is logged to data/agent_queries.jsonl with the time, the final SQL, the number of attempts, the row count, and any error. Set METROFLOW_QUERY_LOG to change the path. The log is ignored by git, and a logging problem never stops a query.
+
 ## Limits
 
 This is a small local eval, 17 of 25 questions with Qwen. A query can run fine and still answer the wrong question, so I still read the SQL before trusting an answer.

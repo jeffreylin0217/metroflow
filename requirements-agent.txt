@@ -2,3 +2,4 @@
 -r requirements.lock
 openai==2.8.1
 sqlglot==28.0.0
+mcp==2.3.0
