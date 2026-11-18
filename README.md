@@ -89,6 +89,10 @@ export METROFLOW_DB="$PWD/data/warehouse.duckdb"
 dbt test --project-dir dbt --profiles-dir dbt
 ```
 
+## Agent
+
+I wanted to see if a small model running on my laptop could answer real questions about this warehouse, safely. The agent writes SQL against the Gold tables, every query is checked and run read only, and I measured accuracy on a fixed set of questions with Granite. Setup and results are in [docs/AGENT.md](docs/AGENT.md).
+
 ## More detail
 
 [Architecture and failure recovery](docs/ARCHITECTURE.md) · [Quality rules](docs/QUALITY.md) · [Sources](docs/SOURCES.md) · [Measured results](docs/AUDIT.md) · [Power BI guide](docs/POWER_BI.md)
