@@ -227,6 +227,11 @@ def test_eval_results():
     assert not compare([(1,)], [(float('nan'),)], 1, 1)[0]
 
 
+def test_eval_hashes():
+    from scripts.eval_agent import CASES, HELD_OUT_CASES, case_hash
+    assert len(CASES) == 15 and len(HELD_OUT_CASES) == 10
+    assert case_hash(CASES) == '925471c114d028b78835248dbc9f220368645ad2f658be56f99b9f06f4690bc7'
+    assert case_hash(HELD_OUT_CASES) == '55a8a452b0851115629470ce4a56d094c42b8f81b16c04d1cfe51686890b1d8f'
 
 
 def test_summary_retry(database):

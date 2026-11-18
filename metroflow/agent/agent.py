@@ -91,7 +91,7 @@ def ask(question, database=WAREHOUSE, client=None):
         base_url = os.getenv('OPENAI_BASE_URL', 'http://localhost:11434/v1')
         api_key = os.getenv('OPENAI_API_KEY', 'ollama')
         client = OpenAI(base_url=base_url, api_key=api_key, timeout=90, max_retries=0)
-    model = os.getenv('OPENAI_MODEL', 'granite4:3b')
+    model = os.getenv('OPENAI_MODEL', 'qwen3.5:4b')
     prompt = SYSTEM + schema_prompt()
     messages = [
         {'role': 'system', 'content': prompt},

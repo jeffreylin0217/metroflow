@@ -20,7 +20,7 @@ Every query goes through these checks before DuckDB sees it:
 
 ## Running it
 
-Use the repo's Python 3.12 venv, start Ollama, and pull granite4:3b:
+Use the repo's Python 3.12 venv, start Ollama, and pull qwen3.5:4b:
 
 ```bash
 .venv/bin/python -m pip install -r requirements-agent.txt
@@ -35,8 +35,26 @@ The model, base URL, and API key come from OPENAI_MODEL, OPENAI_BASE_URL, and OP
 
 I wrote 15 questions with reference SQL. The eval runs the agent's final SQL and the reference SQL and compares the results, ignoring column names and row order and allowing a 0.01 difference on numbers. It grades the query results, not the written answer.
 
-Granite got 7 of the 15 questions right.
+## Comparing models
+
+I ran the same 15 questions on three small models, changing nothing but the model name.
+
+| Model | Correct | Seconds per question | Download size | Output tokens per question |
+|---|---:|---:|---:|---:|
+| granite4:3b | 7/15 | 5.1 | 2.1 GB | 44 |
+| llama3.2:3b | 3/15 | 7.3 | 2.0 GB | 158 |
+| qwen3.5:4b | 11/15 | 34.2 | 4.0 GB | 212 |
+
+Output tokens were measured on the first two original questions. Accuracy and time use all 15.
+
+Qwen got the most right, so it's the default, but it's almost 7 times slower than Granite. It has a thinking mode turned on by default and wrote far more tokens in my two-question sample, which may help explain the gap. Granite is the better pick if speed matters more than accuracy.
+
+## Held out questions
+
+Before trying any prompt changes, I wrote 10 more questions and saved a hash of them so I couldn't quietly change them later. With Qwen, the baseline was 10/15 on the original set and 7/10 on the held out set.
+
+I tried adding example queries to the prompt. Held out accuracy went up from 7/10 to 9/10, but the original set dropped from 10/15 to 8/15. The total didn't improve, so I left them out.
 
 ## Limits
 
-This is a small local eval, 7 of 15 questions with Granite. A query can run fine and still answer the wrong question, so I still read the SQL before trusting an answer.
+This is a small local eval, 17 of 25 questions with Qwen. A query can run fine and still answer the wrong question, so I still read the SQL before trusting an answer.

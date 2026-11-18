@@ -2,6 +2,7 @@
 import argparse
 from datetime import datetime, timezone
 from decimal import Decimal
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -66,8 +67,38 @@ CASES = [
 ]
 
 
+HELD_OUT_CASES = [
+    ('What is the total recorded tip amount in USD for retained credit-card trips, where payment_type is 1?',
+     'SELECT sum(tip_amount) FROM main.fct_trips WHERE payment_type=1'),
+    ('What percentage of retained trips have a usable passenger count?',
+     'SELECT 100.0*sum(trips_with_passenger_count)/sum(trip_count) FROM main.mart_zone_daily'),
+    ('Give the date and minimum Celsius temperature for the coldest loaded observation; break ties by earliest date.',
+     'SELECT date, min_temperature_c FROM main.mart_weather_demand WHERE min_temperature_c IS NOT NULL '
+     'ORDER BY min_temperature_c, date LIMIT 1'),
+    ('What is the total measured snowfall in millimeters across all loaded observation dates?',
+     'SELECT sum(snowfall_mm) FROM main.mart_weather_demand'),
+    ('How many source records were flagged for zero distance, across every quality status and source month?',
+     'SELECT sum(zero_distance) FROM main.mart_quality'),
+    ('Show the average recorded total amount in USD per retained pickup trip for each borough.',
+     'SELECT borough, sum(total_amount)/sum(trip_count) FROM main.mart_borough_daily GROUP BY borough'),
+    ('What is the longest retained trip duration in minutes?',
+     'SELECT max(trip_duration_minutes) FROM main.fct_trips'),
+    ('For each weekday name, how many weather measurements were rejected by quality flags across loaded observation dates?',
+     'SELECT d.weekday_name, sum(w.quality_flagged_values) FROM main.mart_weather_demand w '
+     'JOIN main.dim_date d ON w.date=d.date_key GROUP BY d.weekday_name'),
+    ('List the distinct borough labels in the official zone lookup, alphabetically.',
+     'SELECT DISTINCT borough FROM main.dim_zone ORDER BY borough'),
+    ('What was the largest positive increase in retained trips from the previous observation, and on which date? '
+     'Break ties by earliest date.',
+     'SELECT date, change_from_previous_day FROM main.mart_weather_demand '
+     'WHERE change_from_previous_day > 0 ORDER BY change_from_previous_day DESC, date LIMIT 1'),
+]
 
 
+def case_hash(cases):
+    text = json.dumps(cases, ensure_ascii=False, separators=(',', ':'))
+    digest = hashlib.sha256(text.encode())
+    return digest.hexdigest()
 
 
 def same_value(left, right):
@@ -161,8 +192,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--database', type=Path, default=WAREHOUSE)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--set', dest='eval_set', choices=['original', 'held-out'], default='original')
     args = parser.parse_args()
     cases = CASES
+    if args.eval_set == 'held-out':
+        cases = HELD_OUT_CASES
+    digest = case_hash(cases)
+    print(f'Eval set: {args.eval_set}; question SHA-256: {digest}', flush=True)
     records = []
     with duckdb.connect(str(args.database), read_only=True,
                         config={'enable_external_access': False}) as connection:
@@ -208,6 +244,8 @@ def main():
     if args.output:
         summary = {
             'evaluated_at': datetime.now(timezone.utc).isoformat(),
+            'eval_set': args.eval_set,
+            'question_sha256': digest,
             'accuracy': accuracy,
             'passed': passed,
             'total': len(records),
