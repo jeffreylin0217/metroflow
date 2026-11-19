@@ -93,6 +93,8 @@ dbt test --project-dir dbt --profiles-dir dbt
 
 I wanted to see if a small model running on my laptop could answer real questions about this warehouse, safely. The agent writes SQL against the Gold tables, every query is checked and run read only, and I measured accuracy on a fixed set of questions across three models. The same checked tools are available to other AI agents through MCP, and every final query is logged for review. Setup and results are in [docs/AGENT.md](docs/AGENT.md).
 
+I also added a review step in LangGraph that checks the agent's numbers in code, has a second model score the answer, retries once, and pauses for my approval when it's still unsure. Details are in [docs/REVIEW.md](docs/REVIEW.md).
+
 ## More detail
 
 [Architecture and failure recovery](docs/ARCHITECTURE.md) · [Quality rules](docs/QUALITY.md) · [Sources](docs/SOURCES.md) · [Measured results](docs/AUDIT.md) · [Power BI guide](docs/POWER_BI.md)

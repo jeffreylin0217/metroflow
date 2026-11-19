@@ -11,6 +11,7 @@ jobs:
           python-version: '3.12'
           cache: pip
       - run: pip install -r requirements-agent.txt
+      - run: pip install -r requirements-review.txt
       - run: python -m compileall -q metroflow tests scripts
       - run: python -c "import metroflow.pipeline, metroflow.ingest, metroflow.bronze"
       - run: python -m pytest -q

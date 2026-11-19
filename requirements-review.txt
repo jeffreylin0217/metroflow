@@ -1,0 +1,18 @@
+-r requirements-agent.txt
+jsonpatch==1.47
+jsonpointer==3.12
+langchain-core==1.7.2
+langchain-protocol==0.0.21
+langgraph-checkpoint==4.3.2
+langgraph-prebuilt==1.1.2
+langgraph-sdk==0.4.14
+langgraph==1.2.22
+langsmith==0.15.0
+orjson==3.13.0
+ormsgpack==1.13.1
+requests-toolbelt==1.0.0
+tenacity==9.2.1
+uuid_utils==0.19.0
+websockets==17.4
+xxhash==4.1.0
+zstandard==0.25.0
